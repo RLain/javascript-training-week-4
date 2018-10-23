@@ -4,13 +4,12 @@
 //a "+" button to add up to nine empty position entries. Each position 
 //entry includes a year (integer) and a description.
 
-//becca has made a change
 session_start();
 require_once "pdo.php";
+require_once "util.php";
 
 if (! isset ($_SESSION['name'])) {
-    die('ACCES DENIED');
-
+    die('ACCESS DENIED');
 }
 
 
@@ -20,26 +19,21 @@ if ( isset($_POST['cancel'] ) ) {
     return;
 }
 
-if ( isset($_POST['first_name']) && isset($_POST['last_name']) && isset($_POST['email']) && isset($_POST['headline']) && isset($_POST['summary'])  )
+if ( isset($_POST['first_name']) && isset($_POST['last_name']) 
+&& isset($_POST['email']) && isset($_POST['headline']) && isset($_POST['summary'])  )
  {//Main DIV start 
-    if (( strlen($_POST['first_name']) < 1 ) or ( strlen($_POST['last_name']) < 1 ) or ( strlen($_POST['email']) < 1 ) or ( strlen($_POST['headline']) < 1 )  or ( strlen($_POST['summary']) < 1 ) ) {
-        $_SESSION['error'] = "All fields are required";
+    
+    $msg = validateProfile();
+    if ( is_string($msg) ) {
+        $_SESSION['error'] = $msg;
         header("Location: add.php");
-        error_log("Field entry fail ");
         return;
-    } 
-
-    elseif (!strpos($_POST['email'],'@')) {
-        $_SESSION['error'] = "Email must have an at-sign (@)";
-        header("Location: add.php");
-        error_log("Email entry fail ".$_POST['email']." $check");
-        return; 
     }
 
     //add.php add a new Profile entry. Make sure to mark the entry 
     //with the foreign key user_id of the currently logged in user. Only this user should be able to 
     //delete the profile.
-    else {
+    
         $stmt = $pdo->prepare('INSERT INTO Profile
         (user_id, first_name, last_name, email, headline, summary)
         VALUES ( :uid, :fn, :ln, :em, :he, :su)');
@@ -51,31 +45,51 @@ if ( isset($_POST['first_name']) && isset($_POST['last_name']) && isset($_POST['
         ':he' => $_POST['headline'],
         ':su' => $_POST['summary'])
       );
+
+      $profile_id = $pdo->lastInsertId();
+
+
+      $rank = 1;
+
+      for($i=1; $i<=9; $i++) {
+        if ( ! isset($_POST['year'.$i]) ) continue;
+        if ( ! isset($_POST['desc'.$i]) ) continue;
+        $year = $_POST['year'.$i];
+        $desc = $_POST['desc'.$i];
+
+      $stmt = $pdo->prepare('INSERT INTO Position
+            (profile_id, rank, year, description) 
+        VALUES ( :pid, :rank, :year, :desc)');
+        $stmt->execute(array(
+            ':pid' => $profile_id,
+            ':rank' => $rank,
+            ':year' => $year,
+            ':desc' => $desc)
+        );        
+        $rank++;
+    }
+
         $_SESSION['success'] = "Record added";
         header("Location: index.php");
         return;
-       
-        }
 
 }//Main DIV end
-
 
 ?>
 <!DOCTYPE>
 <html>
 <head>
-        <title>Rebecca's Profile Database 66cf2135</title>
+        <title>Rebecca's Profile Database e2c4c0b3</title>
         <meta charset="UTF-8">
-        <meta content="Coursera: Javascript Week 1 Course">
+        <meta content="Coursera: Javascript Week 3 Course">
     </head>
 <body>
 <main>
 <?php
-            if(isset($_SESSION['error'])) {
-                echo ('<p style="color:orange">'.htmlentities($_SESSION['error'])."</p>\n");
-                unset($_SESSION['error']);
-            }
 
+flashMessages();
+
+           
 ?>
 <form method="post">
         <ul class="wrapper">
@@ -95,7 +109,7 @@ if ( isset($_POST['first_name']) && isset($_POST['last_name']) && isset($_POST['
           <li>
           Position: <input type="submit" id="addPos" value="+"><br/></li>
           <li class="form-row">
-          <div id="position_fields"></li>
+          <div id="position_fields"></div></li>
           <input type="submit" value="Add" name="add" id="submit" size="45">
           <input type="submit" value="Cancel" name="cancel" id="cancel" size="45">
         </ul>
@@ -130,6 +144,10 @@ $(document).ready(function(){
             </div>');
     });
 });
+
+
+
+
 </script>
 
 </body>

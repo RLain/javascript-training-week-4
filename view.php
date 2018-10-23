@@ -6,7 +6,7 @@ session_start();
 require_once "pdo.php";
 
 //Allows the form details to be viewed  = Lexical Scoping, very important to define EVERYTHING that is not a Global Variable
-$sqlt = $pdo->query("SELECT * FROM Profile where profile_id=".$_GET['profile_id']);
+$sqlt = $pdo->query("SELECT * FROM Profile where profile_id=".$_REQUEST['profile_id']);
 $row=$sqlt->fetch(PDO::FETCH_ASSOC); {
 $fn = htmlentities($row['first_name']);
 $ln = htmlentities($row['last_name']);
@@ -39,9 +39,31 @@ $profile_id = $row['profile_id'];
 
 <p class="name">Summary:</p> <?php echo htmlentities($su)?></br></br>
 
+<p class="name">Positions</p> 
+<?php
+
+  $stmt = $pdo->prepare("SELECT * FROM Position where profile_id = :xyz");
+  $stmt->execute(array(":xyz" => $_GET['profile_id']));
+  echo "<p><ul> ";
+  while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
+
+    echo ('<li>'.$row['year'].':'.$row['description'].'</li> ');
+
+  }
+  echo "</ul></p>";
+?>
+
+
+
 <a href="index.php">Done</a>
 
 </main>
+
+<script
+  src="https://code.jquery.com/jquery-3.2.1.js"
+  integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="
+  crossorigin="anonymous"></script>
+
 </body>
 <style>
 
@@ -127,3 +149,8 @@ a {
 
 </style>
 </html>
+
+
+
+
+<!--

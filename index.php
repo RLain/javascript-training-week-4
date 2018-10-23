@@ -12,9 +12,9 @@ $norows = "No data";
 <!DOCTYPE>
 <html>
     <head>
-        <title>Rebecca's Profile Database 202ed379</title>
+        <title>Rebecca's Profile Database e2c4c0b3</title>
         <meta charset="UTF-8">
-        <meta content="Coursera: Javascript Week 1 Course">
+        <meta content="Coursera: Javascript Week 3 Course">
     </head>
     <body>
         <main>
@@ -163,63 +163,5 @@ a {
 }
 
 </style>
-
-<!--
-//Another students code:
-
-                if (!isset($_SESSION['user_id'])) {
-                    echo '<p><h3><a href="login.php">Please log in</a></h3></p>';
-                }
-                else {
-                    echo '<p><h3><a href="logout.php">Logout</a></h3></p>';
-                }
-
-                $stmt = $pdo->query('SELECT user_id, profile_id, first_name, last_name, headline FROM Profile');
-
-                if ( isset($_SESSION['success']) ) {
-                    echo('<p style="color: green;">'.$_SESSION['success']."</p>\n");
-                    unset($_SESSION['success']);
-                }
-                if ( isset($_SESSION['error']) ) {
-                    echo('<p style="color: red;">'.$_SESSION['error']."</p>\n");
-                    unset($_SESSION['error']);
-                }
-
-                if($stmt === false) {
-                    echo "No rows found";
-                }
-                else {
-
-                    echo '<table>';
-                    echo '<tr><th>Name</th>';
-                    echo '<th>Headline</th>';
-                    echo '<th>Action</th></tr>';
-
-                    while( $row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-                        echo '<tr>';
-                        echo '<td><a href="view.php?profile-id='.$row['profile_id'].'">'.htmlentities($row['first_name']).' '.htmlentities($row['last_name']).'</a></td>';
-                        echo '<td>'.htmlentities($row['headline']).'</td>';
-                        echo '<td>';
-                        if (isset($_SESSION['user_id']) && $_SESSION['user_id'] === $row['user_id']) {
-                            echo '<a href="edit.php?profile-id='.$row['profile_id'].'">Edit</a>';
-                            echo ' / ';
-                            echo '<a href="delete.php?profile-id='.$row['profile_id'].'">Delete</a>';
-                        }
-                        echo '</td>';
-                        echo '</tr>';
-                    }
-                    echo '</table>';
-
-                }
-
-                if (isset($_SESSION['user_id'])) {
-                    echo '<br><p><a href="add.php">Add New Entry</a></p>';
-                }
-
-            ?>
-            -->
-
-
 </html>
 

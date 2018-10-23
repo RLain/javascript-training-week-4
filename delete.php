@@ -46,10 +46,10 @@ if (isset($_POST['delete']) && isset($_POST['profile_id']) ) {
 ?>
 <!DOCTYPE>
 <html>
-    <head>
-        <title>Rebecca's Profile Database 202ed379</title>
+<head>
+        <title>Rebecca's Profile Database e2c4c0b3</title>
         <meta charset="UTF-8">
-        <meta content="Coursera: Javascript Week 1 Course">
+        <meta content="Coursera: Javascript Week 3 Course">
     </head>
     <body>
         <main>

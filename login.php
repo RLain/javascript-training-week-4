@@ -58,10 +58,10 @@ if(isset($_POST['email']) && isset($_POST['pass'])) {
 ?>
 <!DOCTYPE>
 <html>
-    <head>
-        <title>Rebecca's Profile Database 66cf2135</title>
+<head>
+        <title>Rebecca's Profile Database e2c4c0b3</title>
         <meta charset="UTF-8">
-        <meta content="Coursera: Javascript Week 1 Course">
+        <meta content="Coursera: Javascript Week 3 Course">
     </head>
     <body>
         <main>
