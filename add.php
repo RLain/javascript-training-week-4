@@ -1,12 +1,8 @@
 <?php
 
-//add.php You will need to have a section where the user can press 
-//a "+" button to add up to nine empty position entries. Each position 
-//entry includes a year (integer) and a description.
-
 session_start();
 require_once "pdo.php";
-require_once "util.php";
+
 
 if (! isset ($_SESSION['name'])) {
     die('ACCESS DENIED');
@@ -22,52 +18,70 @@ if ( isset($_POST['cancel'] ) ) {
 if ( isset($_POST['first_name']) && isset($_POST['last_name']) 
 && isset($_POST['email']) && isset($_POST['headline']) && isset($_POST['summary'])  )
  {//Main DIV start 
+
+    //ValidateProfile
     
-    $msg = validateProfile();
-    if ( is_string($msg) ) {
-        $_SESSION['error'] = $msg;
+    if ( strlen($_POST['first_name']) == 0 || strlen($_POST['last_name']) == 0 ||
+    strlen($_POST['email']) == 0 || strlen($_POST['headline']) == 0 || 
+    strlen($_POST['summary']) == 0 ) {
+        $_SESSION['error'] = "All fields are required";
         header("Location: add.php");
+        error_log("Field entry fail ");
         return;
+
     }
 
-    //add.php add a new Profile entry. Make sure to mark the entry 
-    //with the foreign key user_id of the currently logged in user. Only this user should be able to 
-    //delete the profile.
+    if (strpos($_POST['email'],'@') == false ) {
+        $_SESSION['error'] = "Email must have an at-sign (@)";
+        header("Location: add.php");
+        error_log("Field entry fail ");
+       return; 
+    }
+
+    $stmt = $pdo->prepare('INSERT INTO Profile
+    (user_id, first_name, last_name, email, headline, summary)
+    VALUES ( :uid, :fn, :ln, :em, :he, :su)');
+   $stmt->execute(array(
+    ':uid' => $_SESSION['user_id'],
+    ':fn' => $_POST['first_name'],
+    ':ln' => $_POST['last_name'],
+    ':em' => $_POST['email'],
+    ':he' => $_POST['headline'],
+    ':su' => $_POST['summary'])
+  );
+
+  $profile_id = $pdo->lastInsertId();
+
+
+    //ValidatePOS
+
+    $rank = 1;
     
-        $stmt = $pdo->prepare('INSERT INTO Profile
-        (user_id, first_name, last_name, email, headline, summary)
-        VALUES ( :uid, :fn, :ln, :em, :he, :su)');
-       $stmt->execute(array(
-        ':uid' => $_SESSION['user_id'],
-        ':fn' => $_POST['first_name'],
-        ':ln' => $_POST['last_name'],
-        ':em' => $_POST['email'],
-        ':he' => $_POST['headline'],
-        ':su' => $_POST['summary'])
-      );
-
-      $profile_id = $pdo->lastInsertId();
-
-
-      $rank = 1;
-
-      for($i=1; $i<=9; $i++) {
+    for($i=1; $i<=9; $i++) {
         if ( ! isset($_POST['year'.$i]) ) continue;
         if ( ! isset($_POST['desc'.$i]) ) continue;
         $year = $_POST['year'.$i];
         $desc = $_POST['desc'.$i];
+        if ( strlen($year) == 0 || strlen($desc) == 0 ) {
+            return "All fields are required for the References";
+        }
 
-      $stmt = $pdo->prepare('INSERT INTO Position
-            (profile_id, rank, year, description) 
-        VALUES ( :pid, :rank, :year, :desc)');
-        $stmt->execute(array(
-            ':pid' => $profile_id,
-            ':rank' => $rank,
-            ':year' => $year,
-            ':desc' => $desc)
-        );        
-        $rank++;
+        if ( ! is_numeric($year) ) {
+            return "Position year must be numeric";
     }
+
+     $stmt = $pdo-> prepare('INSERT INTO Position
+         (profile_id, rank, year, description) 
+     VALUES ( :pid, :rank, :year, :desc)');
+     $stmt->execute(array(
+         ':pid' => $profile_id,  //In the add.php file you cannot $_REQUEST a not yet set data point!
+         ':rank' => $rank,
+         ':year' => $year,
+         ':desc' => $desc)
+     );        
+     $rank++;
+    }
+
 
         $_SESSION['success'] = "Record added";
         header("Location: index.php");
@@ -87,8 +101,15 @@ if ( isset($_POST['first_name']) && isset($_POST['last_name'])
 <main>
 <?php
 
-flashMessages();
+if(isset($_SESSION['error'])) {
+    echo ('<p style="color:orange">'.htmlentities($_SESSION['error'])."</p>\n");
+    unset($_SESSION['error']);
+}
 
+if(isset($_SESSION['success'])) {
+    echo ('<p style="color:green">'.htmlentities($_SESSION['success'])."</p>\n");
+    unset($_SESSION['success']);
+}
            
 ?>
 <form method="post">
@@ -106,6 +127,10 @@ flashMessages();
           <label for="summary">Summary:</label><br/>
           <textarea name="summary" rows="8" cols="80"></textarea></li>
           <input type="hidden" name="profile_id">
+          <li>
+          Education: <input type="submit" id="addEdu" value="+"><br/></li>
+          <li class="form-row">
+          <div id="education_fields"></div></li>
           <li>
           Position: <input type="submit" id="addPos" value="+"><br/></li>
           <li class="form-row">
@@ -143,6 +168,8 @@ $(document).ready(function(){
             <textarea name="desc'+countPos+'" rows="8" cols="80"></textarea>\
             </div>');
     });
+
+
 });
 
 
