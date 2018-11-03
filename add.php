@@ -82,6 +82,55 @@ if ( isset($_POST['first_name']) && isset($_POST['last_name'])
      $rank++;
     }
 
+    //ValidateEduction
+
+    $rank = 1;
+
+    for($i=1; $i<=9; $i++) {
+        if ( ! isset($_POST['edu_year'.$i]) ) continue;
+        if ( ! isset($_POST['edu_school'.$i]) ) continue;
+        $year = $_POST['edu_year'.$i];
+        $school = $_POST['edu_school'.$i];
+        if ( strlen($year) == 0 || strlen($school) == 0) {
+            return "All fields are required for the Education";
+        }
+ 
+        if ( ! is_numeric($year) ) {
+            return "Education year must be numeric";
+        }
+
+     //Check to see if the school exists
+
+      $institution_id = false;
+      $stmt = $pdo-> prepare('SELECT institution_id FROM Institution 
+      WHERE name = :name');
+      $stmt->execute(array(':name' => $school));
+      $row = $stmt->fetch(PDO::FETCH_ASSOC);
+      if ($row !== false) $institution_id = $row['institution_id'];
+
+      //If the school doesn't exist, add to the dropdown.
+
+      if ($institution_id === false) {
+          $stmt = $pdo->prepare('INSERT INTO Institution (name) VALUES (:name)');
+          $stmt->execute(array('name'=> $school));
+          $institution_id = $pdo->lastInsertId();
+      }
+    
+
+
+    $stmt = $pdo->prepare('INSERT INTO Education
+    (profile_id, institution_id, rank, year) 
+VALUES ( :pid, :iid, :rank, :year)');
+$stmt->execute(array(
+    ':pid' => $profile_id,
+    ':rank' => $rank,
+    ':year' => $year,
+    ':iid' => $institution_id)
+);  
+
+   $rank++;
+
+}
 
         $_SESSION['success'] = "Record added";
         header("Location: index.php");
@@ -109,8 +158,7 @@ if(isset($_SESSION['error'])) {
 if(isset($_SESSION['success'])) {
     echo ('<p style="color:green">'.htmlentities($_SESSION['success'])."</p>\n");
     unset($_SESSION['success']);
-}
-           
+}          
 ?>
 <form method="post">
         <ul class="wrapper">
@@ -130,8 +178,7 @@ if(isset($_SESSION['success'])) {
           <li>
           Education: <input type="submit" id="addEdu" value="+"><br/></li>
           <li class="form-row">
-          <div id="education_fields"></div></li>
-          <li>
+          <div id="edu_fields"></div></li>
           Position: <input type="submit" id="addPos" value="+"><br/></li>
           <li class="form-row">
           <div id="position_fields"></div></li>
@@ -144,8 +191,14 @@ if(isset($_SESSION['success'])) {
   src="https://code.jquery.com/jquery-3.2.1.js"
   integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="
   crossorigin="anonymous"></script>
+
+<script
+  src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"
+  integrity="sha256-T0Vest3yCU7pafRw9r+settMBX6JkKN06dqBnpQ8d30="
+  crossorigin="anonymous"></script>
 <script>
 countPos = 0;
+countEdu = 0;
 
 // http://stackoverflow.com/questions/17650776/add-remove-html-inside-div-using-javascript
 $(document).ready(function(){
@@ -169,12 +222,43 @@ $(document).ready(function(){
             </div>');
     });
 
+    $('#addEdu').click(function(event){
+        event.preventDefault();
+        if ( countEdu >= 9 ) {
+            alert("Maximum of nine education entries exceeded");
+            return;
+        }
+        countEdu++;
+        window.console && console.log("Adding Education "+countEdu);
+
+        var source = $("#edu-template").html();
+        $('#edu_fields').append(source.replace(/@COUNT@/g,countEdu));
+
+        $('.school').autocomplete({ 
+        source: "school.php"
+        
+    });
+});
+
+        $('.school').autocomplete({ 
+        source: "school.php" 
+        
+    });
+
 
 });
 
 
-
-
+</script>
+<script id="edu-template" type="text">
+<div id="edu@COUNT@">
+    <p>Year: <input type="text" name="edu_year@COUNT@" value="" />
+    <input type="button" value="-"
+        onclick="$('#edu@COUNT@').remove();return false;"><br>
+    <p>School: <input type="text" size="80" name="edu_school@COUNT@" 
+    class="school" value=""/>
+    </p>
+</div>
 </script>
 
 </body>
@@ -199,6 +283,10 @@ body {
     color: white;
     text-align: center;
     font-family: didot;
+}
+
+.school {
+    background-color: black;
 }
 
 .form-row {
