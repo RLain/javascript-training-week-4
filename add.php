@@ -179,6 +179,8 @@ if(isset($_SESSION['success'])) {
           Education: <input type="submit" id="addEdu" value="+"><br/></li>
           <li class="form-row">
           <div id="edu_fields"></div></li>
+          <li class="form-row">
+          <div class="ui-helper-hidden-accessible"></div><li>
           Position: <input type="submit" id="addPos" value="+"><br/></li>
           <li class="form-row">
           <div id="position_fields"></div></li>
@@ -285,8 +287,37 @@ body {
     font-family: didot;
 }
 
-.school {
-    background-color: black;
+
+.ui-helper-hidden-accessible {
+
+display: none;
+
+
+}
+
+.ui-menu-item:hover {
+    background-color: #d9d9db;
+    
+
+}
+
+.ui-menu {
+    background-color: white;
+    color: black;
+    list-style-type: none;
+    padding: 5px;
+    margin: 0px;
+    outline: 0px;
+    text-align: left; 
+    font-family: arial;  
+}
+
+.ui-front {
+    z-index: 100;
+}
+
+.ui-autocomplete {
+    position: absolute;
 }
 
 .form-row {
@@ -295,6 +326,8 @@ body {
   padding: .5em;
 
 }
+
+
 
 .form-row > label {
     padding: .5em 1em .5em 0;
