@@ -47,13 +47,28 @@ $profile_id = $row['profile_id'];
   echo "<p><ul> ";
   while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
 
-    echo ('<li>'.$row['year'].':'.$row['description'].'</li> ');
+    echo ('<li>'.$row['year'].': '.$row['description'].'</li> ');
 
   }
   echo "</ul></p>";
+
 ?>
 
+<p class="name">Education</p> 
+<?php
+$stmt = $pdo->prepare("SELECT * FROM Education 
+LEFT JOIN Institution on education.institution_id = institution.institution_id where profile_id = :xyz");
+$stmt->execute(array(":xyz" => $_GET['profile_id']));
+echo "<p><ul> ";
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
 
+  echo ('<li>'.$row['year'].': '.$row['name'].'</li> ');
+
+}
+echo "</ul></p>";
+
+
+?>
 
 <a href="index.php">Done</a>
 
