@@ -38,6 +38,54 @@ if ( isset($_POST['first_name']) && isset($_POST['last_name'])
        return; 
     }
 
+    for($i=1; $i<=9; $i++) {
+        if ( ! isset($_POST['year'.$i]) ) continue;
+        if ( ! isset($_POST['desc'.$i]) ) continue;
+        $year = $_POST['year'.$i];
+        $desc = $_POST['desc'.$i];
+
+        if ( strlen($year) == 0 || strlen($desc) == 0) {
+            $_SESSION['error'] = "All fields are required for the Position";
+        header("Location: add.php");
+        error_log("Field entry fail ");
+        return; 
+            
+        }
+
+        if ( ! is_numeric($year) ) {
+            $_SESSION['error'] = "Position year must be numeric";
+            header("Location: add.php");
+            error_log("Field entry fail ");
+            return; 
+            
+        }
+    }
+
+    for($i=1; $i<=9; $i++) {
+        if ( ! isset($_POST['edu_year'.$i]) ) continue;
+        if ( ! isset($_POST['edu_school'.$i]) ) continue;
+        $year = $_POST['edu_year'.$i];
+        $school = $_POST['edu_school'.$i];
+        if ( strlen($year) == 0 || strlen($school) == 0) {
+            $_SESSION['error'] = "All fields are required for the Education";
+        header("Location: add.php");
+        error_log("Field entry fail ");
+        return; 
+            
+        }
+ 
+        if ( ! is_numeric($year) ) {
+            $_SESSION['error'] = "Education year must be numeric";
+            header("Location: add.php");
+            error_log("Field entry fail ");
+            return; 
+            
+        }
+
+
+    }
+
+
     $stmt = $pdo->prepare('INSERT INTO Profile
     (user_id, first_name, last_name, email, headline, summary)
     VALUES ( :uid, :fn, :ln, :em, :he, :su)');
@@ -61,14 +109,7 @@ if ( isset($_POST['first_name']) && isset($_POST['last_name'])
         if ( ! isset($_POST['year'.$i]) ) continue;
         if ( ! isset($_POST['desc'.$i]) ) continue;
         $year = $_POST['year'.$i];
-        $desc = $_POST['desc'.$i];
-        if ( strlen($year) == 0 || strlen($desc) == 0 ) {
-            return "All fields are required for the References";
-        }
-
-        if ( ! is_numeric($year) ) {
-            return "Position year must be numeric";
-    }
+        $desc = $_POST['desc'.$i];  
 
      $stmt = $pdo-> prepare('INSERT INTO Position
          (profile_id, rank, year, description) 
@@ -86,18 +127,13 @@ if ( isset($_POST['first_name']) && isset($_POST['last_name'])
 
     $rank = 1;
 
-    for($i=1; $i<=9; $i++) {
+    for($i=1; $i<=9; $i++) {  //Education Div Begin
         if ( ! isset($_POST['edu_year'.$i]) ) continue;
         if ( ! isset($_POST['edu_school'.$i]) ) continue;
         $year = $_POST['edu_year'.$i];
         $school = $_POST['edu_school'.$i];
-        if ( strlen($year) == 0 || strlen($school) == 0) {
-            return "All fields are required for the Education";
-        }
- 
-        if ( ! is_numeric($year) ) {
-            return "Education year must be numeric";
-        }
+    
+    
 
      //Check to see if the school exists
 
@@ -130,7 +166,7 @@ $stmt->execute(array(
 
    $rank++;
 
-}
+} //Education div end
 
         $_SESSION['success'] = "Record added";
         header("Location: index.php");
