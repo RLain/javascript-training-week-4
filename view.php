@@ -1,5 +1,6 @@
 <?php
 //view.php Will show all of the positions in an un-numbered list.
+//view.php Will show all of the educations in an un-numbered list.
 
 
 session_start();
