@@ -1,6 +1,5 @@
 <?php
 
-//This is week 3, testing github. 
 require_once "pdo.php";
 
 session_start();
