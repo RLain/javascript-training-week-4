@@ -1,4 +1,5 @@
 <?php
+
 session_start();
 require_once "pdo.php";
 require_once "util.php";
@@ -122,76 +123,19 @@ if ( isset($_POST['first_name']) && isset($_POST['last_name'])
     
     );
       
-        //This will clear the previous Position entry
-       $stmt = $pdo->prepare('DELETE from Position where profile_id = :pid');
-       $stmt->execute(array(':pid' => $_REQUEST['profile_id']));
+      //Position Table: This will clear the previous entry
+    $stmt = $pdo->prepare('DELETE from Position where profile_id = :pid');
+    $stmt->execute(array(':pid' => $_REQUEST['profile_id']));
 
-       $rank = 1;
+    //This inserts the position entries
+    insertPositions($pdo, $_REQUEST['profile_id']);
 
-       for($i=1; $i<=9; $i++) {
-        if ( ! isset($_POST['year'.$i]) ) continue;
-        if ( ! isset($_POST['desc'.$i]) ) continue;
-        $year = $_POST['year'.$i];
-        $desc = $_POST['desc'.$i];
+     //Education Table: This will clear the previous entry
+     $stmt = $pdo->prepare('DELETE from Education where profile_id = :pid');
+     $stmt->execute(array(':pid' => $_REQUEST['profile_id']));
 
-        $stmt = $pdo->prepare('INSERT INTO Position
-            (profile_id, rank, year, description) 
-        VALUES ( :pid, :rank, :year, :desc)');
-        $stmt->execute(array(
-            ':pid' => $_REQUEST['profile_id'],
-            ':rank' => $rank,
-            ':year' => $year,
-            ':desc' => $desc)
-        );        
-        $rank++;
-
-}
-
-        //This will clear the previous Education entry
-
-        $stmt = $pdo->prepare('DELETE from Education where profile_id = :pid');
-        $stmt->execute(array(':pid' => $_REQUEST['profile_id']));
- 
-        $rank = 1;
- 
-        for($i=1; $i<=9; $i++) { //Education div begin
-         if ( ! isset($_POST['edu_year'.$i]) ) continue;
-         if ( ! isset($_POST['edu_school'.$i]) ) continue;
-         $year = $_POST['edu_year'.$i];
-         $desc = $_POST['edu_school'.$i];
- 
-         //Check to see if the school exists
-
-      $institution_id = false;
-      $stmt = $pdo-> prepare('SELECT institution_id FROM Institution 
-      WHERE name = :name');
-      $stmt->execute(array(':name' => $school));
-      $row = $stmt->fetch(PDO::FETCH_ASSOC);
-      if ($row !== false) $institution_id = $row['institution_id'];
-
-      //If the school doesn't exist, add to the dropdown.
-
-      if ($institution_id === false) {
-          $stmt = $pdo->prepare('INSERT INTO Institution (name) VALUES (:name)');
-          $stmt->execute(array('name'=> $school));
-          $institution_id = $pdo->lastInsertId();
-      }
-    
-
-
-    $stmt = $pdo->prepare('INSERT INTO Education
-    (profile_id, institution_id, rank, year) 
-VALUES ( :pid, :iid, :rank, :year)');
-$stmt->execute(array(
-    ':pid' => $profile_id,
-    ':rank' => $rank,
-    ':year' => $year,
-    ':iid' => $institution_id)
-);  
-
-   $rank++;
-
-} //Education div end
+     //This inserts the education entries
+     insertEducations($pdo, $_REQUEST['profile_id']);
 
       
         $_SESSION['success'] = "Profile Updated";
@@ -201,9 +145,23 @@ $stmt->execute(array(
 
 }//Main DIV end
 
-//Loading the position rows
-$positions = loadPOS($pdo, $_REQUEST['profile_id']);
-$school = loadPOS($pdo, $_REQUEST['profile_id']);
+
+$sql = "SELECT * FROM position WHERE profile_id = :pid ORDER BY rank";
+$stmt = $pdo->prepare($sql);
+$stmt->execute(array(":pid" => $_GET['profile_id']));
+$positions = array();
+while ( $row = $stmt->fetch(PDO::FETCH_ASSOC) ) {
+	$positions[]=$row;
+}
+
+$sql = "SELECT year, name FROM Education JOIN Institution ON Education.institution_id = Institution.institution_id WHERE profile_id = :pid ORDER BY rank";
+$stmt = $pdo->prepare($sql);
+$stmt->execute(array(":pid" => $_GET['profile_id']));
+$schools = array();
+while ( $row = $stmt->fetch(PDO::FETCH_ASSOC) ) {
+	$schools[]=$row;
+}
+
 
 //Allows the form details to be viewed  = Lexical Scoping, very important to define EVERYTHING that is not a Global Variable
 $sqlt = $pdo->query("SELECT * FROM Profile where profile_id=".$_GET['profile_id']);
@@ -222,22 +180,13 @@ $row=$stmt->fetch(PDO::FETCH_ASSOC); {
     $dc = htmlentities($row['description']);
 }
 
-$stmt = $pdo->query("SELECT * FROM Education 
-LEFT JOIN Institution on education.institution_id = institution.institution_id where profile_id=".$_REQUEST['profile_id']);
-$row=$stmt->fetch(PDO::FETCH_ASSOC); {
-    $syr = htmlentities($row['year']);
-    $inst = htmlentities($row['name']);
-}
-
-
-
 ?>
 <!DOCTYPE>
 <html>
 <head>
-        <title>Rebecca's Profile Database e2c4c0b3</title>
+        <title>Rebecca's Profile Database c68bd905</title>
         <meta charset="UTF-8">
-        <meta content="Coursera: Javascript Week 3 Course">
+        <meta content="Coursera: Javascript Week 4 Course - c68bd905">
     </head>
 <body>
 <main>
@@ -262,133 +211,83 @@ $row=$stmt->fetch(PDO::FETCH_ASSOC); {
           <label for="summary">Summary:</label><br/>
           <textarea name="summary" rows="8" cols="80"><?php echo htmlentities($su) ?></textarea></li>
           <input type="hidden" name="profile_id" value="<?= $profile_id ?>">
-          <li>
-          Education: <input type="submit" id="addEdu" value="+"><br/></li>
-          <li class="form-row">
-          <div id="edu_fields"></div></li>
-          <?php
+          Education: <input type="submit" id="addEdu" value="+">
+<div id="education_fields">
+<?php
+$countEdu=0;
+if (! empty ($schools)){
+	foreach ( $schools as $school ) {
+		$countEdu++;
+		echo('<div id="education'.$countEdu.'"><p>Year: <input type="text" name="edu_year'.$countEdu.'" value="'.htmlentities($school['year']).'"/>');
+		echo('<input type="button" value="-" onclick="$(\'#education'.$countEdu.'\').remove();return false;"></p>');
+		echo('<p>School: <input type="text" size="80" name="edu_school'.$countEdu.'" value="'.htmlentities($school['name']).'"/></div>');
+	}
+}
+?>
+</div>
+</p>
 
-          //ToDO: This Piece is not working
-          //Need to allow dropdown to show institution options 
-              $stmt = $pdo->prepare("SELECT * FROM Education LEFT JOIN Institution on education.institution_id = institution.institution_id where profile_id = :xyz ORDER BY rank");
-              $stmt->execute(array(":xyz" => $_GET['profile_id']));
-              $countEdu = 1;
-              while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-                echo (' <div id="edu_fields'.$countEdu.'">
-                <p>Year: <input type="text" name="year'.$countEdu.'" value="'.$row['year'].'" />
-                <input type="button" value="-"
-                    onclick="$(\'#edu_fields'.$countEdu.'\').remove();return false;"></p>
-                    <p>School: <input type="text" size="80" name="desc'.$countEdu.'"  
-                    class="school" value="'.$row['name'].'"/>
-                    </p> ');
-                $countEdu += 1;
-              }
-
-              //Down to here
-               ?>
-          <li class="form-row">
-          <div class="ui-helper-hidden-accessible"></div><li>
-          <li>
-          Position: <input type="submit" id="addPos" value="+">
-            <div id="position_fields">
-              <?php
-              $stmt = $pdo->prepare("SELECT * FROM Position where profile_id = :xyz ORDER BY rank");
-              $stmt->execute(array(":xyz" => $_GET['profile_id']));
-              $countPos = 1;
-              while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-                echo (' <div id="position'.$countPos.'">
-                <p>Year: <input type="text" name="year'.$countPos.'" value="'.$row['year'].'" />
-                <input type="button" value="-"
-                    onclick="$(\'#position'.$countPos.'\').remove();return false;"></p>
-                <textarea name="desc'.$countPos.'" rows="8" cols="80">'.$row['description'].'</textarea>
-                </div> ');
-                $countPos += 1;
-              }
-               ?>
-            </div>
-    </li>
-          <li class="form-row">
-          <div id="position_fields"></div></li>
+<p>
+Position: <input type="submit" id="addPos" value="+">
+<div id="position_fields">
+<?php
+$countPos=0;
+if (! empty ($positions)){
+	foreach ( $positions as $position ) {
+		$countPos++;
+		echo('<div id="position'.$countPos.'"><p>Year: <input type="text" name="year'.$countPos.'" value="'.htmlentities($position['year']).'"/>');
+		echo('<input type="button" value="-" onclick="$(\'#position'.$countPos.'\').remove();return false;"></p>');
+		echo('<textarea name="desc'.$countPos.'" rows="8" cols="80">'.htmlentities($position['description']).'</textarea></div>');
+	}
+}
+?>
+</div>
           <input type="submit" value="Save" name="save" id="submit" size="45">
           <input type="submit" value="Cancel" name="cancel" id="cancel" size="45">
         </ul>
 </form>
-<?php
-
-if ( isset($_SESSION['error']) ) {
-    echo('<p style="color: orange;">'.htmlentities($_SESSION['error'])."</p>\n");
-    unset($_SESSION['error']); //Flash message code
-}
-?>
 </main>
 <script
   src="https://code.jquery.com/jquery-3.2.1.js"
   integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="
   crossorigin="anonymous"></script>
+
+<script
+  src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"
+  integrity="sha256-T0Vest3yCU7pafRw9r+settMBX6JkKN06dqBnpQ8d30="
+  crossorigin="anonymous"></script>
   <script>
-countPos = 0;
-countEdu = 0;
+countPos = <?= $countPos ?>;
+countEdu = <?= $countEdu ?>;
 
-// http://stackoverflow.com/questions/17650776/add-remove-html-inside-div-using-javascript
 $(document).ready(function(){
-    window.console && console.log('Document ready called');
-    $('#addPos').click(function(event){
-        // http://api.jquery.com/event.preventdefault/
-        //Description: If this method is called, the default action of the event will not be triggered.
-        event.preventDefault();
-        if ( countPos >= 9 ) {
-            alert("Maximum of nine position entries exceeded");
-            return;
-        }
-        countPos++;
-        window.console && console.log("Adding position "+countPos);
-        $('#position_fields').append(
-            '<div id="position'+countPos+'"> \
-            <p>Year: <input type="text" name="year'+countPos+'" value="" /> \
-            <input type="button" value="-" \
-                onclick="$(\'#position'+countPos+'\').remove();return false;"></p> \
-            <textarea name="desc'+countPos+'" rows="8" cols="80"></textarea>\
-            </div>');
-    });
-
-    $('#addEdu').click(function(event){
-        event.preventDefault();
-        if ( countEdu >= 9 ) {
-            alert("Maximum of nine education entries exceeded");
-            return;
-        }
-        countEdu++;
-        window.console && console.log("Adding Education "+countEdu);
-
-        var source = $("#edu-template").html();
-        $('#edu_fields').append(source.replace(/@COUNT@/g,countEdu));
-
-        $('.school').autocomplete({ 
-        source: "school.php"
-        
-    });
+	$('#addPos').click(function(event){
+		event.preventDefault();
+		if (countPos >=9){
+			alert("Maximum of nine position entries exceeded");
+			return;
+		}
+		countPos++;
+		$('#position_fields').append('<div id="position'+countPos+'"><p>Year: <input type="text" name="year'+countPos+'" value=""/><input type="button" value="-" onclick="$(\'#position'+countPos+'\').remove();return false;"></p><textarea name="desc'+countPos+'" rows="8" cols="80"></textarea></div>');	
+	});
 });
 
-        $('.school').autocomplete({ 
-        source: "school.php" 
-        
-    });
-
-
+$(document).ready(function(){
+	$('#addEdu').click(function(event){
+		event.preventDefault();
+		if (countPos >=9){
+			alert("Maximum of nine education entries exceeded");
+			return;
+		}
+		countEdu++;
+		$('#education_fields').append('<div id="education'+countEdu+'"><p>Year: <input type="text" name="edu_year'+countEdu+'" value=""/><input type="button" value="-" onclick="$(\'#edu'+countEdu+'\').remove();return false;"></p><p>School: <input type="text" size="80" name="edu_school'+countEdu+'" class="school" value="" /></p></div>');
+                $('.school').autocomplete({
+			source: "school.php"
+		});
+	});
 });
-
-
 </script>
-<script id="edu-template" type="text">
-<div id="edu@COUNT@">
-    <p>Year: <input type="text" name="edu_year@COUNT@" value="" />
-    <input type="button" value="-"
-        onclick="$('#edu@COUNT@').remove();return false;"><br>
-    <p>School: <input type="text" size="80" name="edu_school@COUNT@" 
-    class="school" value=""/>
-    </p>
-</div>
-</script>
+
 </body>
 <style>
 
@@ -504,4 +403,5 @@ a {
 
 </style>
 </html>
+
 

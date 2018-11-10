@@ -14,9 +14,9 @@ $norows = "No data";
 <!DOCTYPE>
 <html>
     <head>
-        <title>Rebecca's Profile Database e2c4c0b3</title>
+        <title>Rebecca's Profile Database c68bd905</title>
         <meta charset="UTF-8">
-        <meta content="Coursera: Javascript Week 3 Course">
+        <meta content="Coursera: Javascript Week 4 Course - c68bd905">
     </head>
     <body>
         <main>
